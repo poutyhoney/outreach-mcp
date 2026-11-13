@@ -1,0 +1,30 @@
+# dependencies
+/node_modules
+
+# next.js build output
+/.next/
+/out/
+/build
+
+# testing
+/coverage
+
+# env files: ignore all, except the example
+.env*
+!.env.example
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# supabase local state
+supabase/.temp
+supabase/.branches
+
+# misc
+.DS_Store
+*.pem
+npm-debug.log*
