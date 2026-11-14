@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:db": "vitest run --config vitest.db.config.mts",
+    "key:create": "node --experimental-strip-types --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/create-api-key.mts",
     "db:types": "supabase gen types --schema public > src/lib/db/database.types.ts && prettier --write src/lib/db/database.types.ts"
   },
   "dependencies": {
