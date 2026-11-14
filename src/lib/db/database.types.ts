@@ -154,6 +154,13 @@ export type Database = {
             referencedRelation: "contacts";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "consent_events_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts_with_consent";
+            referencedColumns: ["id"];
+          },
         ];
       };
       contact_tags: {
@@ -189,6 +196,13 @@ export type Database = {
             columns: ["contact_id"];
             isOneToOne: false;
             referencedRelation: "contacts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "contact_tags_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts_with_consent";
             referencedColumns: ["id"];
           },
           {
@@ -297,6 +311,13 @@ export type Database = {
             referencedRelation: "contacts";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "messages_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts_with_consent";
+            referencedColumns: ["id"];
+          },
         ];
       };
       tags: {
@@ -327,6 +348,22 @@ export type Database = {
           is_opted_out: boolean | null;
           status: Database["public"]["Enums"]["consent_type"] | null;
           status_at: string | null;
+        };
+        ComputedFields: never;
+        Relationships: [];
+      };
+      contacts_with_consent: {
+        Row: {
+          consent_channel: Database["public"]["Enums"]["consent_channel"] | null;
+          consent_status: Database["public"]["Enums"]["consent_type"] | null;
+          consent_status_at: string | null;
+          created_at: string;
+          first_name: string | null;
+          id: string;
+          is_opted_out: boolean | null;
+          last_name: string | null;
+          phone_e164: string;
+          timezone: string | null;
         };
         ComputedFields: never;
         Relationships: [];
