@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:db": "vitest run --config vitest.db.config.ts",
+    "test:db": "vitest run --config vitest.db.config.mts",
     "db:types": "supabase gen types --schema public > src/lib/db/database.types.ts && prettier --write src/lib/db/database.types.ts"
   },
   "dependencies": {
