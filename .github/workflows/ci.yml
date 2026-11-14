@@ -32,9 +32,9 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      # Postgres + REST API only. A fresh start applies migrations and seed.sql.
+      # Postgres, REST API, and auth (needed for `supabase status` to print keys).
       - name: Start local Supabase
-        run: npx supabase start -x gotrue,realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+        run: npx supabase start -x realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
       - name: Export Supabase env for tests
         run: |
           npx supabase status -o env \
@@ -42,4 +42,5 @@ jobs:
             --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
             | grep -E '^SUPABASE_(URL|SERVICE_ROLE_KEY)=' \
             | tr -d '"' >> "$GITHUB_ENV"
+          grep -q '^SUPABASE_SERVICE_ROLE_KEY=' "$GITHUB_ENV" || { echo "supabase status printed no service role key"; exit 1; }
       - run: npm run test:db
