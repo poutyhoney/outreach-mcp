@@ -61,7 +61,10 @@ After Tom says a file works, and he asks for it, add teaching comments to that f
 - Own project: don't name or brand it after any real company.
 - After M0, `main` gets no direct commits: one small branch and PR per change,
   grouped into weekly `release/YYYY-MM-DD` branches. CI is GitHub Actions
-  (`.github/workflows/ci.yml`). There is no git remote yet.
+  (`.github/workflows/ci.yml`). The remote is `origin` on GitHub; open PRs with `gh`.
+- `docs/progress.md` records where the build stands, the current release branch, and
+  decisions made along the way. Read it at the start of each milestone and update it at
+  the end.
 - Never push to `main`, force-push, add a dependency not listed in the brief, or
   change CI/deploy config without asking.
 
