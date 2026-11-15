@@ -10,6 +10,9 @@ const E164_PATTERN = /^\+[1-9]\d{7,14}$/;
 const NANP_PATTERN = /^[2-9]\d{2}[2-9]\d{6}$/;
 const TAG_PATTERN = /^[a-z0-9][a-z0-9_-]{0,49}$/;
 
+// Custom field keys: what a message template can use, e.g. {{ward}}.
+export const CUSTOM_FIELD_KEY_PATTERN = /^[a-z][a-z0-9_]{0,39}$/;
+
 // Accepts E.164 ("+13125550101") or a US/Canada number in a common format
 // ("(312) 555-0101", "312.555.0101", "1-312-555-0101"). Numbers from other
 // countries need a leading + and country code.

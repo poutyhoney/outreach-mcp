@@ -3,7 +3,7 @@
 Where the build stands, and what was decided along the way that the brief doesn't say. Update this
 at the end of each milestone. A new chat should read it together with `BUILD-BRIEF.md`.
 
-Last updated: 2026-11-14, after M2.
+Last updated: 2026-11-15, after M3.
 
 ## Where things stand
 
@@ -12,8 +12,8 @@ Last updated: 2026-11-14, after M2.
 | M0: Skeleton          | Done        | Direct commits on `main`, cleanup in #1 |
 | M1: Data              | Done        | #2 to 5                                 |
 | M2: MCP read tools    | Done        | #9 to 13                                |
-| M3: Writes and import | Next        |                                         |
-| M4: Sending           | Not started |                                         |
+| M3: Writes and import | Done        | #15 to 18                               |
+| M4: Sending           | Next        |                                         |
 | M5: Webhooks          | Not started |                                         |
 | M6: Real clients      | Not started |                                         |
 | M7: Evals (stretch)   | Not started |                                         |
@@ -43,6 +43,20 @@ Chores: #6 and #8. #7 merged `release/2026-11-12` into `main` once, after M1.
   `outreach://compliance-rules` resource (`src/lib/mcp/compliance-rules.ts`).
 - **Read tools**: `search_contacts`, `get_contact`, `get_conversation`, `list_opt_outs`,
   `get_message_status`.
+- **Write tools**: `upsert_contact` and `tag_contacts` (`src/lib/mcp/tools/contact-writes.ts`),
+  and `import_contacts_csv` (`src/lib/mcp/tools/contact-import.ts`). The import is a dry run
+  unless `dry_run` is false.
+- **Validation** (`src/lib/contacts/`): `validate.ts` normalizes phones to E.164, timezones to
+  IANA names, and tags. `csv.ts` parses CSV text. `import.ts` turns CSV text into import rows plus
+  rejected rows with line numbers. All three are pure and unit tested.
+- **Import function** (`import_contacts` migration): one Postgres function does the upsert, tags
+  and consent events in one transaction, and returns the report. A dry run builds the same report
+  and stops before any write. Only `service_role` can call it. `importContacts` in
+  `src/lib/db/contacts.ts` wraps it, and `upsert_contact` uses it too.
+- **Tags** (`src/lib/db/tags.ts`): `addTag` and `removeTag` report changed, unchanged and not
+  found.
+- **Sample CSV** (`docs/samples/contacts-import.csv`): good rows, a bad phone, a duplicate, a
+  short row, a bad timezone, and an opted-out contact. Use it for the M3 check and the M6 demo.
 - **Shared helpers**:
   - `withAudit` (`src/lib/mcp/audit.ts`) wraps every tool handler and writes an `audit_log` row.
   - `redact.ts` masks phones and redacts args.
@@ -54,12 +68,25 @@ Chores: #6 and #8. #7 merged `release/2026-11-12` into `main` once, after M1.
 
 ## Decisions and open items
 
+- **M4: MockProvider.** The M3 line in the brief mentions it, but no M3 tool sends anything. It
+  comes in M4 with the provider interface, as the M4 line says.
 - **M4: provider refresh.** `get_message_status` returns the stored status for now. See the
   `TODO(M4)` in `src/lib/mcp/tools/messages.ts`.
 - **M4: audit gap.** Input that fails zod validation is rejected by the SDK before `withAudit`
   runs, so it gets no audit row. Fine for reads. For send tools, log those too.
 - **M6: OAuth.** Claude custom connectors expect OAuth. This server uses Bearer keys, which work
   for Claude Code and Inspector. Decide how to handle it when M6 starts.
+- **No new dependencies for import.** The CSV parser and phone normalizer are our own. Phones
+  without a country code are read as US numbers.
+- **Import rules.** Blank cells keep the stored value. Custom fields merge into what's stored.
+  `source` is set only when a contact is created. Only the first row for a phone is imported.
+  Consent is recorded only from a consent column and only when it changes.
+- **An import never opts back in an opted-out contact.** Those rows come back in `optInBlocked`.
+  The person opts back in by texting `START` or `UNSTOP`, which the M5 webhook handles.
+- **`tag_contacts` takes at most 100 ids.** supabase-js sends `.in()` filters in the URL, which
+  has a length limit.
+- **DB tests run one file at a time** (`fileParallelism: false` in `vitest.db.config.mts`), because
+  the files share one database.
 - **ESLint stays at 9.39.5** until `eslint-plugin-react` allows ESLint 10. The deprecation warning
   in CI logs is expected.
 - **`npm audit` warning**: a moderate `minimatch` advisory comes from ESLint tooling. Leave it.
@@ -95,3 +122,28 @@ npx @modelcontextprotocol/inspector@2.15.0 --transport http --server-url http://
 
 Inspector's UI opens on port 6274. The MCP server is the Next app on port 3000. Flip the card's
 toggle to connect.
+
+Gotchas:
+
+- **Inspector 2.15.0 needs Node 22.23.4 or newer.** On older Node 22 its UI fails with
+  `Cannot read properties of undefined (reading 'bind')`. Fix: `nvm install 22`, then `nvm use`
+  and restart both tabs. `node -v` should print v22.23 or later.
+- **`npx supabase db reset` deletes API keys.** Inspector then gets a 401, tries OAuth, and fails
+  with `Dynamic Client Registration rejected (HTTP 404)`. Make a new key with `npm run key:create`.
+- **The key shows in `ps` output** while Inspector runs, because it's passed in `--header`. Fine
+  on your own machine. Don't do it on a shared one.
+- **Array and object arguments** in Inspector's form must be JSON, for example
+  `["f34c6b8b-..."]`, not a bare id.
+- **To send a CSV file**, turn on Edit as JSON. In tab 2, put the arguments on the clipboard, then
+  paste them over the whole box:
+
+```bash
+node -e 'console.log(JSON.stringify({ csv: require("fs").readFileSync("docs/samples/contacts-import.csv", "utf8"), dry_run: true }))' | pbcopy
+```
+
+- **After a real import**, remove the sample rows so `npm run test:db` still sees 25 contacts.
+  Use this, not `db reset`, so your key survives:
+
+```bash
+docker exec supabase_db_outreach-mcp psql -U postgres -c "delete from contacts where phone_e164 in ('+13125550131','+13125550132')" -c "update contacts set custom_fields = '{}' where phone_e164 = '+13125550101'" -c "delete from tags where name = 'new-volunteers'"
+```
