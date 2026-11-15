@@ -13,5 +13,8 @@ export default defineConfig({
     environment: "node",
     include: ["tests/db/**/*.test.ts"],
     testTimeout: 15_000,
+    // Some files write rows (import tests add contacts) while others count
+    // seeded rows. Run files one at a time so they never see each other.
+    fileParallelism: false,
   },
 });

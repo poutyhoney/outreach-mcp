@@ -191,3 +191,57 @@ export async function getContactDetails(
   }
   return { ...contact, recentMessages: messages };
 }
+
+// One row for import_contacts, already validated and normalized. Leave a field
+// out (or null) to keep what's stored. Phones must be unique within one call.
+export type ContactImportRow = {
+  phone_e164: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  timezone?: string | null;
+  custom_fields?: Record<string, string>;
+  tags?: string[];
+  consent?: Enums<"consent_type"> | null;
+};
+
+export type ImportReport = {
+  inserted: number;
+  updated: number;
+  consentRecorded: number;
+  // Phones whose opt_in was skipped because the contact is opted out.
+  optInBlocked: string[];
+};
+
+// What the SQL function returns (see the import_contacts migration).
+type ImportReportRow = {
+  inserted: number;
+  updated: number;
+  consent_recorded: number;
+  opt_in_blocked: string[];
+};
+
+// Creates or updates contacts in one transaction through the import_contacts
+// Postgres function. With dryRun: true it only reports what would happen.
+export async function importContacts(
+  db: Db,
+  rows: ContactImportRow[],
+  options: { source: string; dryRun: boolean },
+): Promise<ImportReport> {
+  const { data, error } = await db.rpc("import_contacts", {
+    p_rows: rows,
+    p_source: options.source,
+    p_dry_run: options.dryRun,
+  });
+  if (error) {
+    throw new Error(`importContacts failed: ${error.message}`);
+  }
+
+  // The generated type for a jsonb return is just Json, so name its shape here.
+  const report = data as ImportReportRow;
+  return {
+    inserted: report.inserted,
+    updated: report.updated,
+    consentRecorded: report.consent_recorded,
+    optInBlocked: report.opt_in_blocked,
+  };
+}
