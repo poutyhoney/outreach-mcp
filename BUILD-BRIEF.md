@@ -2,6 +2,8 @@
 
 *For Claude Code. Written 2026-11-11 for Tom De Carlo. Put this file in the root of a new, empty repo and start Claude Code with: "Read BUILD-BRIEF.md and start Milestone 0. Stop at the end of each milestone so I can review."*
 
+*Once the build is under way, start each milestone in a new chat with: "Read BUILD-BRIEF.md and docs/progress.md, then start Milestone N. Stop at the end of the milestone so I can review." `docs/progress.md` says where things stand.*
+
 ---
 
 ## 1. Why this exists
@@ -32,12 +34,12 @@ Next.js on Vercel
 
 ## 3. Stack and versions
 
-- Next.js (App Router), TypeScript strict mode, Node 20+.
+- Next.js (App Router), TypeScript strict mode, Node 22 (pinned in `.nvmrc`).
 - `mcp-handler` v2 with `@modelcontextprotocol/server` v2 and `zod` v4. **Check the current mcp-handler README before writing the route**; v2 is a different API from v1 / `@vercel/mcp-adapter`, and most blog posts show v1. Pin whatever versions you install.
 - Supabase: hosted free project plus the Supabase CLI, with schema changes as SQL migrations in `supabase/migrations/`. Use `@supabase/supabase-js` server-side only.
 - Twilio Node SDK for the real provider.
 - Vitest for tests. ESLint + Prettier.
-- MCP Inspector (`npx @modelcontextprotocol/inspector@latest`) for manual testing.
+- MCP Inspector, pinned to 2.15.0, for manual testing. The launch command is in `docs/progress.md`.
 
 ## 4. Data model (first migration)
 
@@ -45,7 +47,7 @@ Keep it small. Every table gets `id uuid`, `created_at`, and RLS enabled with **
 
 - `contacts`: `first_name`, `last_name`, `phone_e164` (unique), `timezone` (IANA, nullable), `source`, `custom_fields jsonb`.
 - `tags` and `contact_tags` (many-to-many).
-- `consent_events`: `contact_id`, `type` (`opt_in` | `opt_out`), `channel` (`sms_keyword` | `import` | `manual`), `raw_body`, `received_at`. A contact's current status is the latest event; add a view `contact_consent_status`.
+- `consent_events`: `contact_id`, `type` (`opt_in` | `opt_out`), `channel` (`sms_keyword` | `import` | `manual`), `raw_body`, `received_at`. A contact's current status is the latest event; add a view `contact_consent_status`. (M2 added a second view, `contacts_with_consent`, because PostgREST can't embed a view that has no foreign keys.)
 - `messages`: `contact_id`, `direction` (`outbound` | `inbound`), `body`, `provider`, `provider_message_id`, `status`, `error_code`, `broadcast_id` (nullable), `sandbox_redirected_to` (nullable).
 - `broadcasts`: `name`, `body_template`, `tag_filter`, `status` (`draft` | `previewed` | `confirmed` | `sending` | `done`), `preview_count`, `confirm_token_hash`, `sent_count`, `skipped_count`.
 - `api_keys`: `name`, `key_hash` (store hashes only), `last_used_at`, `revoked_at`.
