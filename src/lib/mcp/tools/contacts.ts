@@ -1,7 +1,12 @@
 import type { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
 import { getDb } from "@/lib/db/client";
-import { getContactDetails, searchContacts } from "@/lib/db/contacts";
+import {
+  type ContactLookup,
+  type ContactSummary,
+  getContactDetails,
+  searchContacts,
+} from "@/lib/db/contacts";
 import { withAudit } from "@/lib/mcp/audit";
 import { toolError, toolResult } from "@/lib/mcp/results";
 
@@ -42,7 +47,7 @@ const searchContactsInput = z.object({
     .describe("The nextCursor value from the previous page. Omit it for the first page."),
 });
 
-const getContactInput = z.object({
+export const contactLookupInput = z.object({
   contact_id: z.uuid().optional().describe("The contact's id, from search_contacts."),
   phone: z
     .string()
@@ -50,6 +55,28 @@ const getContactInput = z.object({
     .optional()
     .describe("The full phone number in E.164 format, e.g. +13125550112."),
 });
+
+export function displayName(contact: ContactSummary): string {
+  return [contact.firstName, contact.lastName].filter(Boolean).join(" ") || "(no name)";
+}
+
+// get_contact and get_conversation both take contact_id or phone. Returns the
+// lookup to pass to the database, or a message for the model if the input is wrong.
+export function parseContactLookup({
+  contact_id,
+  phone,
+}: z.infer<typeof contactLookupInput>): { lookup: ContactLookup } | { error: string } {
+  if (contact_id && phone) {
+    return { error: "Pass only one of contact_id or phone, not both." };
+  }
+  if (contact_id) {
+    return { lookup: { id: contact_id } };
+  }
+  if (phone) {
+    return { lookup: { phone } };
+  }
+  return { error: "Pass contact_id or phone." };
+}
 
 export function registerContactTools(server: McpServer): void {
   server.registerTool(
@@ -79,26 +106,23 @@ export function registerContactTools(server: McpServer): void {
         "Get one contact by contact_id or by phone (E.164). Pass exactly one. " +
         "Returns the contact's tags, current consent status (with when and how it was set), and last 10 messages, newest first. " +
         "Check isOptedOut before suggesting any message to this contact. Read-only.",
-      inputSchema: getContactInput,
+      inputSchema: contactLookupInput,
       annotations: { readOnlyHint: true },
     },
-    withAudit("get_contact", async ({ contact_id, phone }) => {
-      if (contact_id && phone) {
-        return toolError("Pass only one of contact_id or phone, not both.");
-      }
-      const lookup = contact_id ? { id: contact_id } : phone ? { phone } : null;
-      if (!lookup) {
-        return toolError("Pass contact_id or phone.");
+    withAudit("get_contact", async (args) => {
+      const parsed = parseContactLookup(args);
+      if ("error" in parsed) {
+        return toolError(parsed.error);
       }
 
-      const contact = await getContactDetails(getDb(), lookup);
+      const contact = await getContactDetails(getDb(), parsed.lookup);
       if (!contact) {
         return toolError(
-          `No contact found for ${contact_id ? `id ${contact_id}` : phone}. Use search_contacts to look them up.`,
+          `No contact found for ${args.contact_id ?? args.phone}. Use search_contacts to look them up.`,
         );
       }
 
-      const name = [contact.firstName, contact.lastName].filter(Boolean).join(" ") || "(no name)";
+      const name = displayName(contact);
       const consent = contact.isOptedOut
         ? "opted out"
         : (contact.consentStatus ?? "no consent record");
