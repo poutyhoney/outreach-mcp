@@ -9,6 +9,8 @@ with a plain reason. Read this before drafting or sending anything.
 
 ## Consent
 - Never message a contact who is opted out. Check consent with get_contact or list_opt_outs.
+- Only message contacts with an opt-in on record. A contact with no consent
+  history is refused until they opt in.
 - Inbound STOP, STOPALL, UNSUBSCRIBE, CANCEL, END, or QUIT opts a contact out.
   START or UNSTOP opts them back in.
 - Importing a contact does not create consent. Consent from an import is recorded

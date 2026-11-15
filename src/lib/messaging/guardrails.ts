@@ -8,7 +8,12 @@ export const SENDING_WINDOW = { startHour: 8, endHour: 21 };
 
 // Why a send was refused. Broadcast previews count skips by this code.
 export type RefusalCode =
-  "opted_out" | "missing_timezone" | "outside_window" | "empty_body" | "body_too_long";
+  | "opted_out"
+  | "no_consent"
+  | "missing_timezone"
+  | "outside_window"
+  | "empty_body"
+  | "body_too_long";
 
 export type SendCheck =
   { ok: true; body: string } | { ok: false; code: RefusalCode; reason: string };
@@ -28,6 +33,12 @@ export function checkSend(target: SendTarget, body: string, now: Date): SendChec
     return refuse(
       "opted_out",
       `${target.name} has opted out. Opted-out contacts can't be messaged.`,
+    );
+  }
+  if (target.consentStatus !== "opt_in") {
+    return refuse(
+      "no_consent",
+      `${target.name} has no opt-in on record. Consent comes from a CSV import with a consent column, or from the contact texting START.`,
     );
   }
 
