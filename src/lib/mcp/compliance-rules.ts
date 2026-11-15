@@ -13,6 +13,8 @@ with a plain reason. Read this before drafting or sending anything.
   START or UNSTOP opts them back in.
 - Importing a contact does not create consent. Consent from an import is recorded
   only when the CSV has a consent column that says so.
+- An import never opts back in a contact who is opted out. Those rows are
+  listed in the import report as optInBlocked.
 
 ## Message content
 - The body must not be empty and must be at most 1,600 characters.

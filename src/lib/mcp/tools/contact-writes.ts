@@ -1,14 +1,17 @@
 import type { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
-import { normalizePhone, normalizeTag, normalizeTimezone } from "@/lib/contacts/validate";
+import {
+  CUSTOM_FIELD_KEY_PATTERN,
+  normalizePhone,
+  normalizeTag,
+  normalizeTimezone,
+} from "@/lib/contacts/validate";
 import { getDb } from "@/lib/db/client";
 import { findContact, importContacts } from "@/lib/db/contacts";
 import { addTag, removeTag } from "@/lib/db/tags";
 import { withAudit } from "@/lib/mcp/audit";
 import { toolError, toolResult } from "@/lib/mcp/results";
 import { displayName } from "@/lib/mcp/tools/contacts";
-
-const CUSTOM_FIELD_KEY = /^[a-z][a-z0-9_]{0,39}$/;
 
 // Phone, timezone, and tag are plain strings here and are checked in the
 // handler, so a bad value comes back as a tool error with a reason (and gets
@@ -27,7 +30,9 @@ const upsertContactInput = z.object({
     .describe("IANA timezone, e.g. America/Chicago. Needed before the contact can be texted."),
   custom_fields: z
     .record(
-      z.string().regex(CUSTOM_FIELD_KEY, "Keys use lowercase letters, digits, and underscores."),
+      z
+        .string()
+        .regex(CUSTOM_FIELD_KEY_PATTERN, "Keys use lowercase letters, digits, and underscores."),
       z.string().max(500),
     )
     .optional()

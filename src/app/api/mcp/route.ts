@@ -6,12 +6,14 @@ import { COMPLIANCE_RULES, COMPLIANCE_RULES_URI } from "@/lib/mcp/compliance-rul
 import { registerContactWriteTools } from "@/lib/mcp/tools/contact-writes";
 import { registerContactTools } from "@/lib/mcp/tools/contacts";
 import { registerMessageTools } from "@/lib/mcp/tools/messages";
+import { registerImportTools } from "@/lib/mcp/tools/contact-import";
 import { APP_NAME } from "@/lib/version";
 
 const handler = createMcpHandler(
   (server) => {
     registerContactTools(server);
     registerContactWriteTools(server);
+    registerImportTools(server);
     registerMessageTools(server);
 
     server.registerResource(

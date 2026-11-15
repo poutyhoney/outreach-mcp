@@ -1,0 +1,9 @@
+phone,first_name,last_name,timezone,tags,consent,ward
+(312) 555-0131,Alma,Reyes,America/Chicago,volunteers;new-volunteers,yes,3
+312.555.0132,Bea,Santos,america/new_york,donors,,
++1 312 555 0101,Maya,,,volunteers,,5
+555-0133,Cal,Ortiz,America/Chicago,,yes,
+(312) 555-0131,Alma,Duplicate,,,,
+3125550134,Dee,Kim,America/Denver,members
++13125550112,Jonah,Pierce,,,yes,
+3125550135,Eli,Ford,EST,,,
