@@ -4,11 +4,13 @@ import { verifyApiKey } from "@/lib/auth/api-keys";
 import { getDb } from "@/lib/db/client";
 import { COMPLIANCE_RULES, COMPLIANCE_RULES_URI } from "@/lib/mcp/compliance-rules";
 import { registerContactTools } from "@/lib/mcp/tools/contacts";
+import { registerMessageTools } from "@/lib/mcp/tools/messages";
 import { APP_NAME } from "@/lib/version";
 
 const handler = createMcpHandler(
   (server) => {
     registerContactTools(server);
+    registerMessageTools(server);
 
     server.registerResource(
       "compliance-rules",

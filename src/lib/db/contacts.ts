@@ -157,31 +157,37 @@ export async function searchContacts(
   return { contacts: page, nextCursor: hasMore ? (page.at(-1)?.id ?? null) : null };
 }
 
-export async function getContactDetails(
-  db: Db,
-  lookup: { id: string } | { phone: string },
-): Promise<ContactDetails | null> {
+export type ContactLookup = { id: string } | { phone: string };
+
+export async function findContact(db: Db, lookup: ContactLookup): Promise<ContactSummary | null> {
   let query = db.from("contacts_with_consent").select(CONTACT_COLUMNS);
   query = "id" in lookup ? query.eq("id", lookup.id) : query.eq("phone_e164", lookup.phone);
 
   const { data, error } = await query.maybeSingle();
   if (error) {
-    throw new Error(`getContactDetails failed: ${error.message}`);
+    throw new Error(`findContact failed: ${error.message}`);
   }
-  if (!data) {
+  return data ? toContactSummary(data) : null;
+}
+
+export async function getContactDetails(
+  db: Db,
+  lookup: ContactLookup,
+): Promise<ContactDetails | null> {
+  const contact = await findContact(db, lookup);
+  if (!contact) {
     return null;
   }
 
-  const contact = toContactSummary(data);
-  const { data: messages, error: messagesError } = await db
+  const { data: messages, error } = await db
     .from("messages")
     .select("id, created_at, direction, body, status")
     .eq("contact_id", contact.id)
     .order("created_at", { ascending: false })
     .limit(10);
 
-  if (messagesError) {
-    throw new Error(`getContactDetails failed: ${messagesError.message}`);
+  if (error) {
+    throw new Error(`getContactDetails failed: ${error.message}`);
   }
   return { ...contact, recentMessages: messages };
 }
