@@ -37,8 +37,9 @@ describe("checkSend", () => {
     expect(checkSend(optedOutNoTimezone, "", NOON_CHICAGO)).toMatchObject({ code: "opted_out" });
   });
 
-  it("allows a contact with no consent record", () => {
-    expect(checkSend({ ...maya, consentStatus: null }, "Hi", NOON_CHICAGO).ok).toBe(true);
+  it("refuses a contact with no consent record", () => {
+    const result = checkSend({ ...maya, consentStatus: null }, "Hi", NOON_CHICAGO);
+    expect(result).toMatchObject({ ok: false, code: "no_consent" });
   });
 
   it("refuses when the timezone is unknown", () => {
