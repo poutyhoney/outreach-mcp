@@ -370,7 +370,10 @@ export type Database = {
       };
     };
     Functions: {
-      [_ in never]: never;
+      import_contacts: {
+        Args: { p_dry_run?: boolean; p_rows: Json; p_source: string };
+        Returns: Json;
+      };
     };
     Enums: {
       broadcast_status: "draft" | "previewed" | "confirmed" | "sending" | "done";
