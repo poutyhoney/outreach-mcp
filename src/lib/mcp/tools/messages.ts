@@ -6,6 +6,8 @@ import { getConversation, getMessage, isFinalStatus } from "@/lib/db/messages";
 import { withAudit } from "@/lib/mcp/audit";
 import { toolError, toolResult } from "@/lib/mcp/results";
 import { contactLookupInput, displayName, parseContactLookup } from "@/lib/mcp/tools/contacts";
+import { getMessaging } from "@/lib/messaging/config";
+import { refreshMessageStatus } from "@/lib/messaging/send";
 
 const getConversationInput = contactLookupInput.extend({
   limit: z
@@ -101,23 +103,28 @@ export function registerMessageTools(server: McpServer): void {
       title: "Get message status",
       description:
         "Get the delivery status of one message by message_id. " +
-        "isFinal is false while the status can still change (queued, sending, sent); check again later. " +
+        "If the status can still change, the server first asks the provider for the latest one. " +
+        "isFinal is false while the status can still change (pending, queued, sending, sent); check again later. " +
         "errorCode is set when delivery failed. Read-only.",
       inputSchema: getMessageStatusInput,
       annotations: { readOnlyHint: true },
     },
     withAudit("get_message_status", async ({ message_id }) => {
-      // TODO(M4): when isFinal is false, ask the provider for a fresh status first.
-      const message = await getMessage(getDb(), message_id);
-      if (!message) {
+      const db = getDb();
+      const stored = await getMessage(db, message_id);
+      if (!stored) {
         return toolError(
           `No message with id ${message_id}. Use get_conversation to find message ids.`,
         );
       }
 
+      const { message, refreshError } = await refreshMessageStatus(db, getMessaging(), stored);
       const isFinal = isFinalStatus(message.status);
+      const note = refreshError
+        ? ` The provider couldn't be reached for a newer status (${refreshError}), so this is the stored one.`
+        : "";
       return toolResult(
-        `Message ${message.id} is ${message.status}${isFinal ? "" : " (not final yet)"}.`,
+        `Message ${message.id} is ${message.status}${isFinal ? "" : " (not final yet)"}.${note}`,
         {
           messageId: message.id,
           status: message.status,

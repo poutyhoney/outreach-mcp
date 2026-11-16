@@ -7,12 +7,11 @@ import {
 } from "./provider";
 
 // A provider that sends nothing. It records each send in memory and returns
-// predictable ids (mock-1, mock-2, ...). Used in tests and local development.
+// ids like mock-<uuid>. Used in tests and local development.
 export class MockProvider implements MessagingProvider {
   readonly name = "mock";
   readonly sent: SendInput[] = [];
 
-  private nextId = 1;
   private statuses = new Map<string, StatusResult>();
   private failuresLeft = 0;
   private failure = { code: "", message: "" };
@@ -31,7 +30,9 @@ export class MockProvider implements MessagingProvider {
     }
 
     this.sent.push(input);
-    const providerMessageId = `mock-${this.nextId++}`;
+    // Unique across server restarts, because messages has a unique index on
+    // (provider, provider_message_id). A counter would restart at mock-1.
+    const providerMessageId = `mock-${crypto.randomUUID()}`;
     this.statuses.set(providerMessageId, { status: "queued" });
     return { providerMessageId, status: "queued" };
   }
