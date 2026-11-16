@@ -130,3 +130,23 @@ export async function updateMessageStatus(
     throw new Error(`updateMessageStatus failed: ${error.message}`);
   }
 }
+
+// The contacts in `contactIds` that already have an outbound message that
+// didn't fail. One query for a whole broadcast audience.
+export async function messagedContactIds(db: Db, contactIds: string[]): Promise<Set<string>> {
+  if (contactIds.length === 0) {
+    return new Set();
+  }
+
+  const { data, error } = await db
+    .from("messages")
+    .select("contact_id")
+    .in("contact_id", contactIds)
+    .eq("direction", "outbound")
+    .not("status", "in", "(failed,undelivered)");
+
+  if (error) {
+    throw new Error(`messagedContactIds failed: ${error.message}`);
+  }
+  return new Set(data.map((row) => row.contact_id));
+}
