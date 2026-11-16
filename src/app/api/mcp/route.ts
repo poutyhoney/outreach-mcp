@@ -3,6 +3,7 @@ import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { verifyApiKey } from "@/lib/auth/api-keys";
 import { getDb } from "@/lib/db/client";
 import { COMPLIANCE_RULES, COMPLIANCE_RULES_URI } from "@/lib/mcp/compliance-rules";
+import { registerBroadcastTools } from "@/lib/mcp/tools/broadcasts";
 import { registerContactWriteTools } from "@/lib/mcp/tools/contact-writes";
 import { registerContactTools } from "@/lib/mcp/tools/contacts";
 import { registerMessageTools } from "@/lib/mcp/tools/messages";
@@ -17,6 +18,7 @@ const handler = createMcpHandler(
     registerImportTools(server);
     registerMessageTools(server);
     registerSendTools(server);
+    registerBroadcastTools(server);
 
     server.registerResource(
       "compliance-rules",

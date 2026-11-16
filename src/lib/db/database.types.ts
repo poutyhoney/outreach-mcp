@@ -72,6 +72,7 @@ export type Database = {
       };
       broadcasts: {
         Row: {
+          audience_hash: string | null;
           body_template: string;
           confirm_token_hash: string | null;
           created_at: string;
@@ -85,6 +86,7 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          audience_hash?: string | null;
           body_template: string;
           confirm_token_hash?: string | null;
           created_at?: string;
@@ -97,6 +99,7 @@ export type Database = {
           tag_filter: string;
         };
         Update: {
+          audience_hash?: string | null;
           body_template?: string;
           confirm_token_hash?: string | null;
           created_at?: string;
@@ -385,6 +388,7 @@ export type Database = {
           consent_status: Database["public"]["Enums"]["consent_type"] | null;
           consent_status_at: string | null;
           created_at: string;
+          custom_fields: NonNullable<Json>;
           first_name: string | null;
           id: string;
           is_opted_out: boolean | null;
