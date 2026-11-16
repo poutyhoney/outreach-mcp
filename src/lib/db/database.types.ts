@@ -320,6 +320,33 @@ export type Database = {
           },
         ];
       };
+      send_rate_limits: {
+        Row: {
+          api_key_id: string;
+          used: number;
+          window_start: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          api_key_id: string;
+          used: number;
+          window_start: string;
+        };
+        Update: {
+          api_key_id?: string;
+          used?: number;
+          window_start?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "send_rate_limits_api_key_id_fkey";
+            columns: ["api_key_id"];
+            isOneToOne: false;
+            referencedRelation: "api_keys";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       tags: {
         Row: {
           created_at: string;
@@ -373,6 +400,14 @@ export type Database = {
       import_contacts: {
         Args: { p_dry_run?: boolean; p_rows: Json; p_source: string };
         Returns: Json;
+      };
+      take_send_quota: {
+        Args: { p_api_key_id: string; p_limit: number; p_window_seconds: number };
+        Returns: {
+          allowed: boolean;
+          resets_at: string;
+          used: number;
+        }[];
       };
     };
     Enums: {
