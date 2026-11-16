@@ -7,6 +7,7 @@ import { registerContactWriteTools } from "@/lib/mcp/tools/contact-writes";
 import { registerContactTools } from "@/lib/mcp/tools/contacts";
 import { registerMessageTools } from "@/lib/mcp/tools/messages";
 import { registerImportTools } from "@/lib/mcp/tools/contact-import";
+import { registerSendTools } from "@/lib/mcp/tools/sending";
 import { APP_NAME } from "@/lib/version";
 
 const handler = createMcpHandler(
@@ -15,6 +16,7 @@ const handler = createMcpHandler(
     registerContactWriteTools(server);
     registerImportTools(server);
     registerMessageTools(server);
+    registerSendTools(server);
 
     server.registerResource(
       "compliance-rules",

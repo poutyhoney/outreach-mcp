@@ -1,5 +1,7 @@
 // Served as the MCP resource outreach://compliance-rules.
 // Keep this in sync with the guardrails in the send tools (M4).
+import { SEND_RATE_LIMIT } from "@/lib/db/rate-limits";
+
 export const COMPLIANCE_RULES_URI = "outreach://compliance-rules";
 
 export const COMPLIANCE_RULES = `# Outreach compliance rules
@@ -34,6 +36,10 @@ with a plain reason. Read this before drafting or sending anything.
   user has seen the preview and said yes.
 - A broadcast is refused if its audience changed since the preview.
 - A broadcast can reach at most 50 recipients.
+
+## Rate limit
+- send_message and send_broadcast share a limit of ${SEND_RATE_LIMIT.limit} calls per
+  ${SEND_RATE_LIMIT.windowSeconds} seconds for each API key, refused calls included.
 
 ## Sandbox
 - While sandbox mode is on, every outbound message goes to a test phone,
